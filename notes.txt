@@ -1,0 +1,2 @@
+Command to run:
+python gen_data.py --alphapose_dir '/home/ruben/Documents/Learning/VUB/CurrentTrendsInAI/Project/AlphaPose' --dir '/home/ruben/Downloads/UBnormal' --outdir '/home/ruben/Documents/Learning/VUB/CurrentTrendsInAI/Project/AlphaPoseOutput' --video
