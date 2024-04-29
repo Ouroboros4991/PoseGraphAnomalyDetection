@@ -12,6 +12,9 @@ sys.path.insert(0, os.path.dirname(__file__))
 import torch
 import numpy as np
 
+import sys
+sys.path.append("..")
+
 from yolox.yolox.exp import get_exp
 from yolox.utils import prep_image, prep_frame
 from yolox.yolox.utils import postprocess

@@ -1,2 +1,5 @@
 Command to run:
 python gen_data.py --alphapose_dir '/home/ruben/Documents/Learning/VUB/CurrentTrendsInAI/Project/AlphaPose' --dir '/home/ruben/Downloads/UBnormal' --outdir '/home/ruben/Documents/Learning/VUB/CurrentTrendsInAI/Project/AlphaPoseOutput' --video
+
+
+python gen_data.py --alphapose_dir '/mnt/c/Users/ruben/Documents/VUB/CurrentTrendsOfAI/PoseGraphAnomalyDetection/AlphaPose' --dir '/mnt/c/Users/ruben/Documents/VUB/CurrentTrendsOfAI/PoseGraphAnomalyDetection/Data/UBnormal' --outdir '/mnt/c/Users/ruben/Documents/VUB/CurrentTrendsOfAI/PoseGraphAnomalyDetection/AlphaPoseOutput' --video
