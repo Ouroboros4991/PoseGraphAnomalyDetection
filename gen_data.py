@@ -81,11 +81,22 @@ def main():
     curr_dir = os.path.dirname(os.path.realpath(__file__))
     img_dirs = []
     output_files = os.listdir(args.outdir)
+
+    processed_videos = []
+    for path, subdirs, files in os.walk(args.outdir):
+        for name in files:
+            if name.endswith("_alphapose-results.json"):
+                video_name = name.split('_alphapose-results.json')[0]
+                processed_videos.append(video_name)
     for path, subdirs, files in os.walk(root):
         for name in files:
             try:
                 run_pose = False
                 if args.video and name.endswith(".mp4") or name.endswith("avi"):
+                    video_name = name.split('.')[0]
+                    if video_name in processed_videos:
+                        print(f'Skipping {video_name}')
+                        continue
                     video_filename = os.path.join(path, name)
                     video_basename = basename(video_filename)[:-4]
                     run_pose = True
@@ -120,6 +131,8 @@ def main():
                     os.rename("alphapose-results.json", alphapose_results_filename)
                     shutil.rmtree('poseflow', ignore_errors=True)
                     os.chdir(curr_dir)
+            except KeyboardInterrupt:
+                raise
             except Exception as e:
                 logging.warning(e, exc_info=True)
 

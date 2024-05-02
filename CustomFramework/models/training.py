@@ -168,7 +168,6 @@ class Trainer:
             if self.args.model_confidence:
                 nll = nll * score
             probs = torch.cat((probs, -1 * nll), dim=0)
-            break
         prob_mat_np = probs.cpu().detach().numpy().squeeze().copy(order='C')
         return prob_mat_np
 
