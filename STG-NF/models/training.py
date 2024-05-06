@@ -93,13 +93,11 @@ class Trainer:
             checkpoint = torch.load(filename)
             self.start_epoch = checkpoint['epoch']
             self.model.load_state_dict(checkpoint['state_dict'], strict=False)
-            print('Initializing actnorm')
             self.model.set_actnorm_init()
             self.optimizer.load_state_dict(checkpoint['optimizer'])
             print("Checkpoint loaded successfully from '{}' at (epoch {})\n"
                   .format(filename, checkpoint['epoch']))
-        except FileNotFoundError as error:
-            print(error)
+        except FileNotFoundError:
             print("No checkpoint exists from '{}'. Skipping...\n".format(self.args.ckpt_dir))
 
     def train(self, log_writer=None, clip=100):
@@ -168,7 +166,6 @@ class Trainer:
             if self.args.model_confidence:
                 nll = nll * score
             probs = torch.cat((probs, -1 * nll), dim=0)
-            break
         prob_mat_np = probs.cpu().detach().numpy().squeeze().copy(order='C')
         return prob_mat_np
 

@@ -70,72 +70,63 @@ def create_command(alphapose_dir, video_filename, out_dir, is_video=False):
 def main():
     # parse command line
     ap = argparse.ArgumentParser()
-    ap.add_argument('--dir', dest='dir', type=str, required=True, help='video\images dir')
-    ap.add_argument('--outdir', dest='outdir', type=str, required=True, help='video\images outdir')
-    ap.add_argument('--alphapose_dir', dest='alphapose_dir', type=str, required=True, help='alphapose_dir')
-    ap.add_argument('--video', dest='video', action='store_true', help='is video')
-    # args = vars(ap.parse_args())
+    ap.add_argument('--dataset', type=str, required=True, help='Target dataset such as UBI_FIGHTS or UBnormal. This dataset should be located in the data folder')
     args = ap.parse_args()
-    # print(args)
-    root = args.dir
+    alphapose_dir = os.path.join(os.getcwd(), 'AlphaPose')
+    video_dir = os.path.join(os.getcwd(), f'data/{args.dataset}/videos')
+    output_dir = os.path.join(os.getcwd(), f'data/{args.dataset}/poses')
+    root = video_dir
+
     curr_dir = os.path.dirname(os.path.realpath(__file__))
     img_dirs = []
-    output_files = os.listdir(args.outdir)
+    output_files = os.listdir(output_dir)
 
     processed_videos = []
-    for path, subdirs, files in os.walk(args.outdir):
+    for path, subdirs, files in os.walk(output_dir):
         for name in files:
             if name.endswith("_alphapose-results.json"):
                 video_name = name.split('_alphapose-results.json')[0]
                 processed_videos.append(video_name)
     for path, subdirs, files in os.walk(root):
         for name in files:
-            try:
-                run_pose = False
-                if args.video and name.endswith(".mp4") or name.endswith("avi"):
-                    video_name = name.split('.')[0]
-                    if video_name in processed_videos:
-                        print(f'Skipping {video_name}')
-                        continue
-                    video_filename = os.path.join(path, name)
-                    video_basename = basename(video_filename)[:-4]
-                    run_pose = True
-                elif name.endswith(".jpg") or name.endswith(".png"):
-                    if path not in img_dirs:
-                        video_filename = path
-                        img_dirs.append(path)
-                        video_basename = basename(video_filename)
-                        run_pose = True
-                if run_pose:
-                    # Rename constants
-                    alphapose_orig_results_filename = 'alphapose-results.json'
-                    alphapose_tracked_results_filename = video_basename + '_alphapose_tracked_person.json'
-                    alphapose_results_filename = video_basename + '_alphapose-results.json'
-                    if alphapose_results_filename in output_files:
-                        continue
-                    # Change to AlphaPose dir
-                    os.chdir(args.alphapose_dir)
+            run_pose = False
+            # We only care about videos for this use case
+            if name.endswith(".mp4") or name.endswith("avi"):
+                video_name = name.split('.')[0]
+                if video_name in processed_videos:
+                    print(f'Skipping {video_name}')
+                    continue
+                video_filename = os.path.join(path, name)
+                video_basename = basename(video_filename)[:-4]
+                run_pose = True
+            else:
+                print(f'Unknown file format: {name}, skipping')
+                continue
+            if run_pose:
+                # Rename constants
+                alphapose_orig_results_filename = 'alphapose-results.json'
+                alphapose_tracked_results_filename = video_basename + '_alphapose_tracked_person.json'
+                alphapose_results_filename = video_basename + '_alphapose-results.json'
+                if alphapose_results_filename in output_files:
+                    continue
+                # Change to AlphaPose dir
+                os.chdir(alphapose_dir)
 
-                    # Build command line
-                    command = create_command(args.alphapose_dir, video_filename, args.outdir, is_video=args.video)
-                    # # Run command
-                    print('\n$', command)
-                    os.system(command)
+                # Build command line
+                command = create_command(alphapose_dir, video_filename, output_dir, is_video=True)
+                # # Run command
+                print('\n$', command)
+                os.system(command)
 
-                    # Change back to directory containing this script (main_alpahpose.py)
-                    os.chdir(args.outdir)
+                # Change back to directory containing this script (main_alpahpose.py)
+                os.chdir(output_dir)
 
-                    # Convert alphapose-results.json to *_alphapose_tracked_person.json
-                    read_convert_write(alphapose_orig_results_filename, alphapose_tracked_results_filename)
-                    # Optionally, rename generic filename 'alphapose-results.json' by adding video filename prefix
-                    os.rename("alphapose-results.json", alphapose_results_filename)
-                    shutil.rmtree('poseflow', ignore_errors=True)
-                    os.chdir(curr_dir)
-            except KeyboardInterrupt:
-                raise
-            except Exception as e:
-                logging.warning(e, exc_info=True)
-
+                # Convert alphapose-results.json to *_alphapose_tracked_person.json
+                read_convert_write(alphapose_orig_results_filename, alphapose_tracked_results_filename)
+                # Optionally, rename generic filename 'alphapose-results.json' by adding video filename prefix
+                os.rename("alphapose-results.json", alphapose_results_filename)
+                shutil.rmtree('poseflow', ignore_errors=True)
+                os.chdir(curr_dir)
 
 if __name__ == '__main__':
     # Usage: python gen_data.py --alphapose_dir /path/to/AlphaPoseFloder/ --dir /input/dir/ --outdir /output/dir/ [--video]

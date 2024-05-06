@@ -32,10 +32,8 @@ def main():
     args.ckpt_dir = create_exp_dirs(args.exp_dir, dirmap=args.dataset)
 
     pretrained = vars(args).get('checkpoint', None)
-    print('Pretrained:', pretrained)
-    print('Prep data')
     dataset, loader = get_dataset_and_loader(args, trans_list=trans_list, only_test=(pretrained is not None))
-    print('Init model')
+
     model_args = init_model_params(args, dataset)
     model = STG_NF(**model_args)
     num_of_params = calc_num_of_params(model)
@@ -43,15 +41,13 @@ def main():
                       optimizer_f=init_optimizer(args.model_optimizer, lr=args.model_lr),
                       scheduler_f=init_scheduler(args.model_sched, lr=args.model_lr, epochs=args.epochs))
     if pretrained:
-        print('Loading checkpoint')
         trainer.load_checkpoint(pretrained)
     else:
         writer = SummaryWriter()
         trainer.train(log_writer=writer)
         dump_args(args, args.ckpt_dir)
-    print('Testing...')
+
     normality_scores = trainer.test()
-    print(normality_scores)
     auc, scores = score_dataset(normality_scores, dataset["test"].metadata, args=args)
 
     # Logging and recording results

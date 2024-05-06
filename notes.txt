@@ -19,3 +19,14 @@ python eval.py --dataset UBnormal \
 --checkpoint /mnt/c/Users/ruben/Documents/VUB/CurrentTrendsOfAI/PoseGraphAnomalyDetection/CustomFramework/models/STG/checkpoints/UBnormal_unsupervised_71_8.tar \
 --pose_path '/mnt/c/Users/ruben/Documents/VUB/CurrentTrendsOfAI/PoseGraphAnomalyDetection/STG-NF/data/UBnormal/pose/test' \
 --vid_path '/mnt/c/Users/ruben/Documents/VUB/CurrentTrendsOfAI/PoseGraphAnomalyDetection/STG-NF/data/UBnormal/videos'
+
+
+python run.py \
+--trajectories '/mnt/c/Users/ruben/Documents/VUB/CurrentTrendsOfAI/PoseGraphAnomalyDetection/TrajREC/data/UBnormal/training/trajectories' \
+--testdata '/mnt/c/Users/ruben/Documents/VUB/CurrentTrendsOfAI/PoseGraphAnomalyDetection/TrajREC/data/UBnormal/testing' \
+--batch_size 512 \
+--wandb False \
+ --eval_only true \
+--weights '/mnt/c/Users/ruben/Documents/VUB/CurrentTrendsOfAI/PoseGraphAnomalyDetection/TrajREC/checkpoints/HRAve_ckpt.pt' \
+--video_resolution '1080x720' \
+--input_length 3
