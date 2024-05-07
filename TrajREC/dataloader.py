@@ -106,13 +106,15 @@ def create_train_val_v2(trajectories_path, video_resolution, input_length, pred_
                         local_normalisation_strategy='zero_one', out_normalisation_strategy='zero_one'):
     video_resolution = [float(measurement) for measurement in video_resolution.split('x')]
     video_resolution = np.array(video_resolution, dtype=np.float32)
+
     trajectories = load_trajectories(trajectories_path)
-    print('\nLoaded %d trajectories.' % len(trajectories))
+    #print('\nLoaded %d trajectories.' % len(trajectories))
 
 
     trajectories = remove_short_trajectories(trajectories, input_length=input_length,
                                              input_gap=0, pred_length=pred_length)
-    print('\nRemoved short trajectories. Number of trajectories left: %d.' % len(trajectories))
+    #print('\nRemoved short trajectories. Number of trajectories left: %d.' % len(trajectories))
+
     trajectories_train, trajectories_val = split_into_train_and_test(trajectories, train_ratio=0.98, seed=42)
 
     if input_missing_steps:
@@ -274,7 +276,9 @@ def aggregate_rnn_ae_evaluation_data(trajectories, input_length):
         trajectories_ids.append(traj_ids)
         frames.append(traj_frames)
         X.append(traj_X)
+
     trajectories_ids, frames, X = np.vstack(trajectories_ids), np.vstack(frames), np.vstack(X)
+
     return trajectories_ids, frames, X
 
 
@@ -291,6 +295,7 @@ def _aggregate_rnn_ae_evaluation_data(trajectory, input_length):
         traj_frames.append(frames[start_index:stop_index])
 
     traj_frames, traj_X = np.stack(traj_frames, axis=0), np.stack(traj_X, axis=0)
+
     trajectory_id = trajectory.trajectory_id
     traj_ids = np.full(traj_frames.shape, fill_value=trajectory_id)
 
@@ -329,11 +334,13 @@ def load_evaluation_data(global_scaler,
                          rec_data=True,
                          sort=False):
     trajectories = load_trajectories(trajectories_path, sort)
+
     trajectories = remove_short_trajectories(trajectories, input_length=inp_len,
                                              input_gap=inp_gap, pred_length=pred_len)
     global_trajectories = extract_global_features(deepcopy(trajectories), video_resolution=res)
     global_trajectories = change_coordinate_system(global_trajectories, video_resolution=res,
                                                    coordinate_system='global', invert=False)
+    
     trajectories_ids, frames, X_global = aggregate_rnn_ae_evaluation_data(global_trajectories,
                                                                           input_length=inp_len+pred_len)
     X_global, _ = scale_trajectories(X_global, scaler=global_scaler, strategy=bb_norm)
