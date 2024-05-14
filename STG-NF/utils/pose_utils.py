@@ -6,7 +6,7 @@ from PIL import Image
 from matplotlib import pyplot as plt
 from tqdm import tqdm
 
-plt.style.use('seaborn-ticks')
+# plt.style.use('seaborn-ticks')
 
 
 def get_ab_labels(global_data_np_ab, segs_meta_ab, path_to_vid_dir='', segs_root=''):

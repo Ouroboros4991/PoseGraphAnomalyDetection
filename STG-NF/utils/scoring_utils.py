@@ -1,5 +1,6 @@
 import os
 import re
+import pickle
 import numpy as np
 from scipy.ndimage import gaussian_filter1d
 from sklearn.metrics import roc_auc_score
@@ -77,6 +78,25 @@ def smooth_scores(scores_arr, sigma=7):
     return scores_arr
 
 
+def convert_lines_annotation_to_mask(annotations):
+    filters = []
+    for line in annotations:
+        _, start_frame, end_frame = line.split(',')
+        # Use float to avoid issues with scientific notation
+        filters.append(
+                (
+                    int(float(start_frame)),
+                    int(float(end_frame))
+                )
+        )
+    
+    mask = [1] * 451
+    for i in range(451):
+        for start, end in filters:
+            if start <= i <= end:
+                mask[i] = 0
+    return np.array(mask)
+
 def get_clip_score(scores, clip, metadata_np, metadata, per_frame_scores_root, args):
     if args.dataset == 'UBnormal':
         type, scene_id, clip_id = re.findall('(abnormal|normal)_scene_(\d+)_scenario(.*)_tracks.*', clip)[0]
@@ -90,7 +110,14 @@ def get_clip_score(scores, clip, metadata_np, metadata, per_frame_scores_root, a
     clip_metadata = metadata[clip_metadata_inds]
     clip_fig_idxs = set([arr[2] for arr in clip_metadata])
     clip_res_fn = os.path.join(per_frame_scores_root, clip)
-    clip_gt = np.load(clip_res_fn)
+    try:
+        clip_gt = np.load(clip_res_fn, allow_pickle=True)
+    except pickle.UnpicklingError:
+        with open(clip_res_fn) as f:
+            annotations = [line.strip() for line in f.readlines()]
+        clip_gt = convert_lines_annotation_to_mask(annotations)
+        np.save(file=clip_res_fn, arr=clip_gt, allow_pickle=True)
+
     if args.dataset != "UBnormal":
         clip_gt = np.ones(clip_gt.shape) - clip_gt  # 1 is normal, 0 is abnormal
     scores_zeros = np.ones(clip_gt.shape[0]) * np.inf
@@ -106,8 +133,11 @@ def get_clip_score(scores, clip, metadata_np, metadata, per_frame_scores_root, a
         pid_scores = scores[person_metadata_inds]
 
         pid_frame_inds = np.array([metadata[i][3] for i in person_metadata_inds]).astype(int)
-        clip_person_scores_dict[person_id][pid_frame_inds + int(args.seg_len / 2)] = pid_scores
-
+        try:
+            clip_person_scores_dict[person_id][pid_frame_inds + int(args.seg_len / 2)] = pid_scores
+        except IndexError:
+            # Ignore index errors due to incorrectly translated masks
+            pass
     clip_ppl_score_arr = np.stack(list(clip_person_scores_dict.values()))
     clip_score = np.amin(clip_ppl_score_arr, axis=0)
 

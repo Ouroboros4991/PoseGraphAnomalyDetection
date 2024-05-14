@@ -24,6 +24,8 @@ from alphapose.utils.vis import getTime
 from alphapose.utils.webcam_detector import WebCamDetectionLoader
 from alphapose.utils.writer import DataWriter
 
+torch.backends.cudnn.enabled = False 
+
 """----------------------------- Demo options -----------------------------"""
 parser = argparse.ArgumentParser(description='AlphaPose Demo')
 parser.add_argument('--cfg', type=str, required=True,
@@ -56,15 +58,15 @@ parser.add_argument('--format', type=str,
                     help='save in the format of cmu or coco or openpose, option: coco/cmu/open')
 parser.add_argument('--min_box_area', type=int, default=0,
                     help='min box area to filter out')
-parser.add_argument('--detbatch', type=int, default=5,
+parser.add_argument('--detbatch', type=int, default=1,
                     help='detection batch size PER GPU')
-parser.add_argument('--posebatch', type=int, default=64,
+parser.add_argument('--posebatch', type=int, default=2,
                     help='pose estimation maximum batch size PER GPU')
 parser.add_argument('--eval', dest='eval', default=False, action='store_true',
                     help='save the result json as coco format, using image index(int) instead of image name(str)')
 parser.add_argument('--gpus', type=str, dest='gpus', default="0",
                     help='choose which cuda device to use by index and input comma to use multi gpus, e.g. 0,1,2,3. (input -1 for cpu only)')
-parser.add_argument('--qsize', type=int, dest='qsize', default=1024,
+parser.add_argument('--qsize', type=int, dest='qsize', default=4,
                     help='the length of result buffer, where reducing it will lower requirement of cpu memory')
 parser.add_argument('--flip', default=False, action='store_true',
                     help='enable flip testing')
