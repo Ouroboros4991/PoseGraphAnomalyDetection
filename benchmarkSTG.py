@@ -1,3 +1,6 @@
+"""File containing the logic needed to run the benchmarking of the STG-NF model.
+"""
+
 import os
 import pandas as pd
 import json
@@ -9,6 +12,10 @@ import subprocess
 import re
 import pickle
 
+from typing import List
+
+
+# Configure these variables to point to the right directories
 SOURCE_VIDEO_DIR = './raw_data/UBnormal/videos'
 SOURCE_POS_DIR = './raw_data/UBnormal/poses'
 SOURCE_GT_DIR = './raw_data/UBnormal/annotations/frame_level'
@@ -41,6 +48,11 @@ EVAL_CMD = '''python train_eval.py --dataset UBnormal --seg_len 16  --only_test 
 '''
 
 def remove_files(directory: str):
+    """Remove all files in the given directory.
+
+    Args:
+        directory (str): Target directory
+    """
     for root, dirs, files in os.walk(directory):
         for file in files:
            file_path = os.path.join(root, file)
@@ -83,11 +95,16 @@ def run_command(
        command_response = process.poll()
    return output if return_output else command_response
 
-# Copy GT:
 def copy_gt(source_gt_dir: str, dst_gt_dir: str):
-    # Cleanup folder:
+    """Copy the ground truth files from the source directory with the standarized format
+    to the STG directory in the format that the model expects.
+
+    Args:
+        source_gt_dir (str): Source of the ground truth
+        dst_gt_dir (str): STG destination directory
+    """
     pathlib.Path(dst_gt_dir).mkdir(parents=True, exist_ok=True)
-    remove_files(DST_GT_DIR)
+    remove_files(DST_GT_DIR) # Cleanup the destination directory in case there are already files there
     for root, dirs, files in os.walk(source_gt_dir):
         for file in files:
             if file.endswith('.npy'):
@@ -104,10 +121,17 @@ def copy_gt(source_gt_dir: str, dst_gt_dir: str):
                         converted_array.append(0)
                 np_dest = os.path.join(DST_GT_DIR, f'{video_name}_tracks.txt')
                 np.save(np_dest, converted_array, allow_pickle=True)
-                # shutil.copyfile(np_file, np_dest)
-                os.rename(f"{np_dest}.npy", np_dest)   
-# Copy poses
+                os.rename(f"{np_dest}.npy", np_dest)
+
+
 def copy_poses(videos: list, source_dir, dst_dir: str):
+    """Copy the pose files from the source directory with the standarized format
+    to the STG directory in the format that the model expects.
+
+    Args:
+        source_dir (str): Source of the poses
+        dst_dir (str): STG destination directory
+    """
     pathlib.Path(dst_dir).mkdir(parents=True, exist_ok=True)
     remove_files(dst_dir)
     for video_name in videos:
@@ -118,7 +142,19 @@ def copy_poses(videos: list, source_dir, dst_dir: str):
         shutil.copyfile(source_file, dest_file)
 
 
-def get_checkpoints(source_dir):
+def get_checkpoints(source_dir: str) -> List[str]:
+    """Get all the checkpoints in the given directory.
+    We assume that the checkpoints are stored as a tar file.
+
+    Args:
+        source_dir (str): Directory containing the checkpoints
+
+    Raises:
+        Exception: No checkpoints found
+
+    Returns:
+        List[str]: List of found checkpoints
+    """    
     checkpoints = []
     for root, dirs, files in os.walk(source_dir):
         for file in files:
@@ -130,10 +166,18 @@ def get_checkpoints(source_dir):
 
 
 def execute_benchmark(model, n_runs=100):
+    """Executes the benchmarking of the model by running the evaluation script
+    for the given amount of times.
+    The results of each run is concatenated into a single CSV file.
+
+    Args:
+        model (str): Model to evaluate
+        n_runs (int, optional): Number of runs to evaluate the model. Defaults to 100.
+    """
     pathlib.Path(BENCH_MARK_DIR).mkdir(parents=True, exist_ok=True)
     results = []
     for i in range(n_runs):
-        # Copy random subset of the test videos to the folder 
+        # Copy random subset of the test videos to the folder
         # this due to memory issues
         test_sample = random.sample(TEST_VIDEOS, 50)
         copy_poses(test_sample, SOURCE_POS_DIR, DST_TEST_POSE_DIR)
@@ -160,10 +204,11 @@ def execute_benchmark(model, n_runs=100):
 
 
 if __name__ == '__main__':
+    # For performance reasons we only copy the ground truth and training data once.
+    # Hence during your initial run, you should uncomment these lines.
     # copy_gt(SOURCE_GT_DIR, DST_GT_DIR)
     # copy_training()
     checkpoints = get_checkpoints(CHECKPOINTS_DIR)
-    checkpoints = ['ShanghaiTech_85_9.tar']
     for model in checkpoints:
         execute_benchmark(model, n_runs=100)
     print('Benchmarking completed')

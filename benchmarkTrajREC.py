@@ -1,3 +1,6 @@
+"""File containing the logic needed to run the benchmarking of the STG-NF model.
+"""
+
 import os
 import pandas as pd
 import json
@@ -9,6 +12,7 @@ import pickle
 import subprocess
 
 # Global variables
+# Change these to point to the correct directories
 SOURCE_POSE_DIR = './raw_data/UBnormal/poses'
 SOURCE_GT_DIR = './raw_data/UBnormal/annotations/pose_level'
 DST_TRAIN_POSE_DIR = './TrajREC/data/UBnormal/training/trajectories'
@@ -46,11 +50,6 @@ def remove_files(directory: str):
         directory (str): Target directory
     """
     shutil.rmtree(directory)
-    # for root, dirs, files in os.walk(directory):
-    #     for file in files:
-    #        file_path = os.path.join(root, file)
-    #        if os.path.isfile(file_path):
-    #            os.remove(file_path)
 
 def run_command(
    command: str,
@@ -124,7 +123,7 @@ def copy_gt(source_gt_dir: str, dst_gt_dir: str):
     Args:
         source_gt_dir (str): source of the ground truth
         dst_gt_dir (str): Target directory
-    """    
+    """
     remove_files(dst_gt_dir)  # Cleanup folder
     for root, dirs, files in os.walk(source_gt_dir):
         for file in files:
@@ -143,7 +142,7 @@ def copy_training():
     for video_name in TRAINING_VIDEOS:
         pose_file = f'{SOURCE_POSE_DIR}/{video_name}_alphapose_tracked_person.json'
         pose_dict = get_pose_data(pose_file)
-    
+
         for traj_id, csv_data in pose_dict.items():
             # Skip records with a short trajectory
             if len(csv_data) < 12:
@@ -167,7 +166,7 @@ def copy_test_data(video_list):
     for video_name in video_list:
         pose_file = f'{SOURCE_POSE_DIR}/{video_name}_alphapose_tracked_person.json'
         pose_dict = get_pose_data(pose_file)
-    
+
         for traj_id, csv_data in pose_dict.items():
             # Skip records with a short trajectory
             if len(csv_data) < 12:
@@ -181,7 +180,7 @@ def copy_test_data(video_list):
             track_target_file = f'{track_dir}/{video_name.replace("_", "")}_{traj_id}.csv'
             # print(f'Writing trajectory to {track_target_file}')
             df.to_csv(track_target_file, index=False)
-    
+
             # Copy annotation:
             np_src_file = f'{SOURCE_GT_DIR}/{video_name}/{str(int(traj_id))}.npy'
             np_dest_dir = f'{DST_TEST_GT_DIR}/{video_name.replace("_", "")}_{traj_id}'
@@ -201,7 +200,7 @@ def get_checkpoints(source_dir: str) -> list:
 
     Returns:
         list: List of the found checkpoint files
-    """    
+    """
     checkpoints = []
     for root, dirs, files in os.walk(source_dir):
         for file in files:
@@ -212,11 +211,20 @@ def get_checkpoints(source_dir: str) -> list:
     return checkpoints
 
 
-def execute_benchmark(model, n_runs=100, verbose=False):
+def execute_benchmark(model: str, n_runs: int = 100, verbose: bool = False):
+    """Executes the benchmarking of the model by running the evaluation script
+    for the given amount of times.
+    The results of each run is concatenated into a single CSV file.
+
+    Args:
+        model (str): Model to evaluate
+        n_runs (int, optional): Number of runs to evaluate the model. Defaults to 100.
+        verbose (bool, optional): Print all lines of the output of the command. Defaults to False.
+    """
     pathlib.Path(BENCH_MARK_DIR).mkdir(parents=True, exist_ok=True)
     results = []
     for i in range(n_runs):
-        # Copy random subset of the test videos to the folder 
+        # Copy random subset of the test videos to the folder
         # this due to memory issues
         test_sample = random.sample(TEST_VIDEOS, 50)
         copy_test_data(test_sample)

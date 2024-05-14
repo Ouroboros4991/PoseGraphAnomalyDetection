@@ -1,3 +1,5 @@
+# This script is based on the run.py script in TrajREC but is modified to make it easier to evaluate the model
+
 from functools import partial
 import argparse
 import datetime

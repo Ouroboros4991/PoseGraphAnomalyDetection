@@ -129,6 +129,4 @@ def main():
                 os.chdir(curr_dir)
 
 if __name__ == '__main__':
-    # Usage: python gen_data.py --alphapose_dir /path/to/AlphaPoseFloder/ --dir /input/dir/ --outdir /output/dir/ [--video]
-    # Usage: python gen_data.py --alphapose_dir '/home/ruben/Documents/Learning/VUB/CurrentTrendsInAI/Project/AlphaPose' --dir '/home/ruben/Downloads/UBnormal' --outdir '/home/ruben/Documents/Learning/VUB/CurrentTrendsInAI/Project/AlphaPoseOutput' --video
-    main()
+   main()
